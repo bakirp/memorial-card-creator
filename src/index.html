@@ -199,6 +199,22 @@
         font-size: 0.9rem;
       }
 
+      .status-message {
+        margin-top: 14px;
+        min-height: 24px;
+        color: var(--accent-dark);
+        font-size: 0.92rem;
+        font-weight: 700;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 220ms ease, transform 220ms ease;
+      }
+
+      .status-message.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       .photo-tools {
         padding: 16px 18px;
         border-radius: 18px;
@@ -377,6 +393,7 @@
           <div class="field">
             <label for="gender" id="genderLabel">Gender</label>
             <select id="gender" name="gender">
+              <option value=""></option>
               <option value="FEMALE">Female</option>
               <option value="MALE">Male</option>
             </select>
@@ -459,6 +476,7 @@
         <div class="hint" id="previewHint">
           The preview updates automatically. Downloads use the same rendered card.
         </div>
+        <div class="status-message" id="statusMessage" aria-live="polite"></div>
       </section>
 
       <section class="panel preview-panel">
@@ -470,8 +488,9 @@
           <canvas id="cardCanvas" width="1600" height="1200"></canvas>
         </div>
         <div class="actions preview-actions">
-          <button type="button" id="downloadPng">Download PNG</button>
-          <button type="button" class="secondary" id="downloadJpg">Download JPEG</button>
+          <button type="button" id="downloadPng">Download</button>
+          <button type="button" id="copyImage">Copy Image</button>
+          <button type="button" class="secondary" id="shareImage">Share Image</button>
         </div>
       </section>
     </main>
@@ -488,15 +507,18 @@
       const deceasedDateNative = document.getElementById("deceasedDateNative");
       const maiyatDateNative = document.getElementById("maiyatDateNative");
       const pngButton = document.getElementById("downloadPng");
-      const jpgButton = document.getElementById("downloadJpg");
+      const copyButton = document.getElementById("copyImage");
+      const shareImageButton = document.getElementById("shareImage");
       const heading = document.querySelector(".controls h1");
       const appDescription = document.getElementById("appDescription");
       const previewTitle = document.getElementById("previewTitle");
       const previewSubtitle = document.getElementById("previewSubtitle");
       const previewHint = document.getElementById("previewHint");
+      const statusMessage = document.getElementById("statusMessage");
       const photoScaleInput = document.getElementById("photoScale");
       const photoScaleValue = document.getElementById("photoScaleValue");
       const resetPhotoAdjustmentsButton = document.getElementById("resetPhotoAdjustments");
+      let statusMessageTimer = null;
 
       const uiTextElements = {
         languageLabel: document.getElementById("languageLabel"),
@@ -523,9 +545,19 @@
           previewTitle: "Live Preview",
           previewSubtitle: "Landscape poster",
           previewHint: "The preview updates automatically. Downloads use the same rendered card.",
-          downloadPng: "Download PNG",
-          downloadJpg: "Download JPEG",
+          downloadPng: "Download",
+          copyImage: "Copy Image",
+          shareImage: "Share Image",
           resetPhotoAdjustments: "Reset Photo Position",
+          copySuccess: "Image copied. You can now paste it into supported apps.",
+          copyUnsupported:
+            "Image copy is not supported in this browser. Use Download PNG instead.",
+          copyPermissionDenied:
+            "Clipboard access was blocked. Allow clipboard permission and try again.",
+          exportFailed: "Unable to generate the image file.",
+          shareSuccess: "Share sheet opened.",
+          shareUnavailable:
+            "Sharing is not supported here. Download the image and share it manually.",
           languageLabel: "Card Language",
           genderLabel: "Gender",
           nameLabel: "Deceased Name",
@@ -542,7 +574,7 @@
             "Move the portrait directly on the card preview and use zoom to resize it.",
           photoScaleLabel: "Zoom",
           languageOptions: { EN: "English", GU: "Gujarati" },
-          genderOptions: { FEMALE: "Female", MALE: "Male" },
+          genderOptions: { "": "Select gender", FEMALE: "Female", MALE: "Male" },
           ageUnitOptions: { YEARS: "Year", MONTHS: "Month" },
           monthNames: [
             "JANUARY",
@@ -569,6 +601,7 @@
           },
           cardTopArabic: "Inna Lillahi wa Inna Ilayhi Raji’un",
           cardTopMeaning: "(We Surely Belong to Allah and To Him We Shall Return)",
+          soulRestNeutral: "MAY THEIR SOUL REST IN ETERNAL PEACE",
           soulRestMale: "MAY HIS SOUL REST IN ETERNAL PEACE",
           soulRestFemale: "MAY HER SOUL REST IN ETERNAL PEACE",
           announcement: "MAIYAT ANNOUNCEMENT",
@@ -592,9 +625,19 @@
           previewTitle: "લાઇવ પ્રિવ્યુ",
           previewSubtitle: "લેન્ડસ્કેપ પોસ્ટર",
           previewHint: "પ્રિવ્યુ આપમેળે અપડેટ થાય છે. ડાઉનલોડમાં એ જ રેન્ડર થયેલું કાર્ડ મળશે.",
-          downloadPng: "PNG ડાઉનલોડ કરો",
-          downloadJpg: "JPEG ડાઉનલોડ કરો",
+          downloadPng: "ડાઉનલોડ કરો",
+          copyImage: "છબી કૉપી કરો",
+          shareImage: "છબી શેર કરો",
           resetPhotoAdjustments: "ફોટો સ્થિતિ રીસેટ કરો",
+          copySuccess: "છબી કૉપી થઈ ગઈ. હવે તમે તેને સપોર્ટેડ એપમાં પેસ્ટ કરી શકો છો.",
+          copyUnsupported:
+            "આ બ્રાઉઝરમાં છબી કૉપી સપોર્ટેડ નથી. તેના બદલે PNG ડાઉનલોડ કરો.",
+          copyPermissionDenied:
+            "ક્લિપબોર્ડ પરવાનગી બંધ હતી. પરવાનગી આપો અને ફરી પ્રયત્ન કરો.",
+          exportFailed: "છબી ફાઇલ બનાવવામાં અસમર્થ.",
+          shareSuccess: "શેર શીટ ખુલ્યું.",
+          shareUnavailable:
+            "અહીં શેરિંગ સપોર્ટેડ નથી. છબી ડાઉનલોડ કરીને તેને હાથથી શેર કરો.",
           languageLabel: "કાર્ડ ભાષા",
           genderLabel: "લિંગ",
           nameLabel: "મરહૂમનું નામ",
@@ -611,7 +654,7 @@
             "કાર્ડ પ્રિવ્યુમાં ફોટો સીધો ખેંચો અને કદ બદલવા માટે ઝૂમ વાપરો.",
           photoScaleLabel: "ઝૂમ",
           languageOptions: { EN: "English", GU: "ગુજરાતી" },
-          genderOptions: { FEMALE: "સ્ત્રી", MALE: "પુરુષ" },
+          genderOptions: { "": "લિંગ પસંદ કરો", FEMALE: "સ્ત્રી", MALE: "પુરુષ" },
           ageUnitOptions: { YEARS: "વર્ષ", MONTHS: "મહિનો" },
           monthNames: [
             "જાન્યુઆરી",
@@ -638,6 +681,7 @@
           },
           cardTopArabic: "ઇન્ના લિલ્લાહિ વ ઇન્ના ઇલૈહિ રાજીઊન",
           cardTopMeaning: "(અમે અલ્લાહના છીએ અને તેની તરફ જ પરત ફરવાના છીએ)",
+          soulRestNeutral: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
           soulRestMale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
           soulRestFemale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
           announcement: "મૈયતની જાણ",
@@ -671,7 +715,7 @@
         ageUnit: "YEARS",
         resident: "",
         burialPlace: "",
-        gender: "FEMALE",
+        gender: "",
         deceasedDate: "",
         maiyatDate: "",
         time: "00:00",
@@ -922,9 +966,11 @@
         state.name = uppercase(form.name.value);
         state.age = normalizeAgeValue(form.age.value);
         state.ageUnit = uppercase(form.ageUnit.value || "YEARS");
-        state.resident = form.resident.value.trim();
-        state.burialPlace = form.burialPlace.value.trim();
-        state.gender = uppercase(form.gender.value || "FEMALE");
+        state.resident =
+          state.language === "GU" ? form.resident.value.trim() : uppercase(form.resident.value);
+        state.burialPlace =
+          state.language === "GU" ? form.burialPlace.value.trim() : uppercase(form.burialPlace.value);
+        state.gender = uppercase(form.gender.value);
         state.deceasedDate = normalizeDisplayDate(form.deceasedDate.value);
         state.maiyatDate = normalizeDisplayDate(form.maiyatDate.value);
         state.time = form.time.value;
@@ -950,7 +996,8 @@
         previewSubtitle.textContent = locale.previewSubtitle;
         previewHint.textContent = locale.previewHint;
         pngButton.textContent = locale.downloadPng;
-        jpgButton.textContent = locale.downloadJpg;
+        copyButton.textContent = locale.copyImage;
+        shareImageButton.textContent = locale.shareImage;
         resetPhotoAdjustmentsButton.textContent = locale.resetPhotoAdjustments;
 
         Object.entries(uiTextElements).forEach(([key, element]) => {
@@ -959,12 +1006,26 @@
           }
         });
 
-        form.language.options[0].textContent = locale.languageOptions.EN;
-        form.language.options[1].textContent = locale.languageOptions.GU;
-        form.gender.options[0].textContent = locale.genderOptions.FEMALE;
-        form.gender.options[1].textContent = locale.genderOptions.MALE;
-        form.ageUnit.options[0].textContent = locale.ageUnitOptions.YEARS;
-        form.ageUnit.options[1].textContent = locale.ageUnitOptions.MONTHS;
+        Array.from(form.language.options).forEach((option) => {
+          const label = locale.languageOptions[option.value];
+          if (label) {
+            option.textContent = label;
+          }
+        });
+
+        Array.from(form.gender.options).forEach((option) => {
+          const label = locale.genderOptions[option.value];
+          if (label) {
+            option.textContent = label;
+          }
+        });
+
+        Array.from(form.ageUnit.options).forEach((option) => {
+          const label = locale.ageUnitOptions[option.value];
+          if (label) {
+            option.textContent = label;
+          }
+        });
       }
 
       function getImageSourceDimensions(image) {
@@ -1117,7 +1178,12 @@
         targetHeight = CARD_HEIGHT
       ) {
         const locale = getLocale();
-        const soulRestText = state.gender === "MALE" ? locale.soulRestMale : locale.soulRestFemale;
+        let soulRestText = locale.soulRestNeutral;
+        if (state.gender === "MALE") {
+          soulRestText = locale.soulRestMale;
+        } else if (state.gender === "FEMALE") {
+          soulRestText = locale.soulRestFemale;
+        }
         const outerRadius = 46;
         const outerInset = 6;
         const innerInset = 22;
@@ -1188,16 +1254,10 @@
           `${locale.fieldAge}: ${state.age || "--"} ${
             state.ageUnit === "MONTHS" ? locale.unitMonths : locale.unitYears
           }`,
-          `${locale.fieldResident}: ${
-            state.language === "GU" ? state.resident || "--" : uppercase(state.resident) || "--"
-          }`,
+          `${locale.fieldResident}: ${state.resident || "--"}`,
           `${locale.fieldDeceasedDate}: ${formatDate(state.deceasedDate) || "--"}`,
           `${locale.fieldMaiyatDate}: ${formatDate(state.maiyatDate) || "--"}`,
-          `${locale.fieldBurialPlace}: ${
-            state.language === "GU"
-              ? state.burialPlace || "--"
-              : uppercase(state.burialPlace) || "--"
-          }`,
+          `${locale.fieldBurialPlace}: ${state.burialPlace || "--"}`,
           `${locale.fieldTime}: ${formatTime(state.time, state.maiyatDate) || "--"}`,
         ];
 
@@ -1311,6 +1371,14 @@
         canvas.style.cursor = point && isPointInsidePhotoFrame(point) ? "grab" : "default";
       }
 
+      function bindNativeDatePicker(nativeInput, textInput) {
+        nativeInput.addEventListener("change", () => {
+          textInput.value = normalizeIsoDate(nativeInput.value);
+          drawCard();
+          nativeInput.blur();
+        });
+      }
+
       function sanitizeFileName() {
         const base = (state.name || "memorial-card")
           .trim()
@@ -1320,16 +1388,22 @@
         return base || "memorial-card";
       }
 
-      function setButtonsDisabled(disabled) {
-        pngButton.disabled = disabled;
-        jpgButton.disabled = disabled;
+      function updateActionAvailability(busy = false) {
+        const canCopy = supportsImageClipboard();
+        const canShare =
+          typeof navigator !== "undefined" &&
+          typeof navigator.share === "function" &&
+          typeof navigator.canShare === "function";
+        pngButton.disabled = busy;
+        copyButton.disabled = busy || !canCopy;
+        shareImageButton.disabled = busy || !canShare;
       }
 
-      function downloadCard(type) {
-        setButtonsDisabled(true);
-        const mimeType = type === "jpeg" ? "image/jpeg" : "image/png";
-        const extension = type === "jpeg" ? "jpg" : "png";
-        const quality = type === "jpeg" ? 0.92 : undefined;
+      function setButtonsDisabled(disabled) {
+        updateActionAvailability(disabled);
+      }
+
+      function renderExportCanvas() {
         const exportCanvas = document.createElement("canvas");
         exportCanvas.width = CARD_WIDTH * EXPORT_SCALE;
         exportCanvas.height = CARD_HEIGHT * EXPORT_SCALE;
@@ -1337,33 +1411,172 @@
         exportCtx.imageSmoothingEnabled = true;
         exportCtx.imageSmoothingQuality = "high";
 
-        if (type === "jpeg") {
-          exportCtx.fillStyle = "#f1efe7";
-          exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        renderCard(exportCtx, exportCanvas.width, exportCanvas.height);
+        return exportCanvas;
+      }
+
+      function exportCardBlob() {
+        const exportCanvas = renderExportCanvas();
+
+        return new Promise((resolve, reject) => {
+          exportCanvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("export-failed"));
+                return;
+              }
+
+              resolve(blob);
+            },
+            "image/png"
+          );
+        });
+      }
+
+      function dataUrlToBlob(dataUrl) {
+        const parts = String(dataUrl).split(",");
+        if (parts.length !== 2) {
+          throw new Error("export-failed");
         }
 
-        renderCard(exportCtx, exportCanvas.width, exportCanvas.height);
+        const mimeMatch = parts[0].match(/^data:([^;]+);base64$/);
+        if (!mimeMatch) {
+          throw new Error("export-failed");
+        }
 
-        exportCanvas.toBlob(
-          (blob) => {
-            setButtonsDisabled(false);
-            if (!blob) {
-              window.alert("Unable to generate the image file.");
-              return;
-            }
+        const binary = window.atob(parts[1]);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) {
+          bytes[index] = binary.charCodeAt(index);
+        }
 
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${sanitizeFileName()}.${extension}`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-          },
-          mimeType,
-          quality
+        return new Blob([bytes], { type: mimeMatch[1] });
+      }
+
+      function exportCardBlobSync() {
+        const exportCanvas = renderExportCanvas();
+        return dataUrlToBlob(exportCanvas.toDataURL("image/png"));
+      }
+
+      function showMessage(message) {
+        if (statusMessageTimer) {
+          window.clearTimeout(statusMessageTimer);
+        }
+
+        statusMessage.textContent = message;
+        statusMessage.classList.add("visible");
+        statusMessageTimer = window.setTimeout(() => {
+          statusMessage.classList.remove("visible");
+          statusMessageTimer = window.setTimeout(() => {
+            statusMessage.textContent = "";
+          }, 220);
+        }, 3200);
+      }
+
+      function getShareMessage() {
+        const locale = getLocale();
+        const name = state.language === "GU" ? state.name.trim() : uppercase(state.name);
+        if (name) {
+          return state.language === "GU"
+            ? `${name} માટેનું સ્મૃતિ કાર્ડ શેર કરી રહ્યો છું.`
+            : `Sharing the memorial card for ${name}.`;
+        }
+
+        return state.language === "GU"
+          ? "સ્મૃતિ કાર્ડ શેર કરી રહ્યો છું."
+          : "Sharing the memorial card.";
+      }
+
+      function supportsImageClipboard() {
+        return Boolean(
+          window.isSecureContext &&
+            navigator.clipboard &&
+            typeof navigator.clipboard.write === "function" &&
+            typeof window.ClipboardItem === "function"
         );
+      }
+
+      function supportsFileShare(files) {
+        return Boolean(
+          typeof navigator !== "undefined" &&
+            typeof navigator.share === "function" &&
+            typeof navigator.canShare === "function" &&
+            navigator.canShare({ files })
+        );
+      }
+
+      async function downloadCard() {
+        setButtonsDisabled(true);
+        try {
+          const blob = await exportCardBlob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `${sanitizeFileName()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+          showMessage(getLocale().exportFailed);
+        } finally {
+          setButtonsDisabled(false);
+        }
+      }
+
+      async function copyCardImage() {
+        if (!supportsImageClipboard()) {
+          showMessage(getLocale().copyUnsupported);
+          return;
+        }
+
+        setButtonsDisabled(true);
+        try {
+          const blob = exportCardBlobSync();
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              "image/png": blob,
+            }),
+          ]);
+          showMessage(getLocale().copySuccess);
+        } catch (error) {
+          if (error && (error.name === "NotAllowedError" || error.name === "SecurityError")) {
+            showMessage(getLocale().copyPermissionDenied);
+          } else {
+            showMessage(getLocale().copyUnsupported);
+          }
+        } finally {
+          setButtonsDisabled(false);
+        }
+      }
+
+      async function shareCardImage() {
+        const shareMessage = getShareMessage();
+        setButtonsDisabled(true);
+
+        try {
+          const blob = exportCardBlobSync();
+          const file = new File([blob], `${sanitizeFileName()}.png`, { type: "image/png" });
+          const files = [file];
+
+          if (!supportsFileShare(files)) {
+            showMessage(getLocale().shareUnavailable);
+            return;
+          }
+
+          await navigator.share({
+            files,
+            text: shareMessage,
+            title: "Memorial Card",
+          });
+          showMessage(getLocale().shareSuccess);
+        } catch (error) {
+          if (!error || error.name !== "AbortError") {
+            showMessage(getLocale().shareUnavailable);
+          }
+        } finally {
+          setButtonsDisabled(false);
+        }
       }
 
       form.addEventListener("input", drawCard);
@@ -1436,26 +1649,8 @@
           canvas.style.cursor = "default";
         }
       });
-      deceasedDateNative.addEventListener("input", () => {
-        form.deceasedDate.value = normalizeIsoDate(deceasedDateNative.value);
-        drawCard();
-        deceasedDateNative.blur();
-      });
-      deceasedDateNative.addEventListener("change", () => {
-        form.deceasedDate.value = normalizeIsoDate(deceasedDateNative.value);
-        drawCard();
-        deceasedDateNative.blur();
-      });
-      maiyatDateNative.addEventListener("input", () => {
-        form.maiyatDate.value = normalizeIsoDate(maiyatDateNative.value);
-        drawCard();
-        maiyatDateNative.blur();
-      });
-      maiyatDateNative.addEventListener("change", () => {
-        form.maiyatDate.value = normalizeIsoDate(maiyatDateNative.value);
-        drawCard();
-        maiyatDateNative.blur();
-      });
+      bindNativeDatePicker(deceasedDateNative, form.deceasedDate);
+      bindNativeDatePicker(maiyatDateNative, form.maiyatDate);
       document.querySelectorAll("[data-picker-target]").forEach((button) => {
         button.addEventListener("click", () => {
           const picker = document.getElementById(button.dataset.pickerTarget);
@@ -1477,8 +1672,10 @@
           picker.removeAttribute("aria-hidden");
         });
       }
-      pngButton.addEventListener("click", () => downloadCard("png"));
-      jpgButton.addEventListener("click", () => downloadCard("jpeg"));
+      updateActionAvailability(false);
+      pngButton.addEventListener("click", downloadCard);
+      copyButton.addEventListener("click", copyCardImage);
+      shareImageButton.addEventListener("click", shareCardImage);
 
       drawCard();
     </script>
