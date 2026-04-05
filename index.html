@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memorial Card Creator</title>
+    <style>
+      :root {
+        --page-bg: #f1efe7;
+        --panel-bg: rgba(255, 255, 255, 0.88);
+        --panel-border: rgba(21, 54, 26, 0.12);
+        --text-main: #16311a;
+        --text-muted: #56705b;
+        --accent: #2f7f1a;
+        --accent-dark: #215b12;
+        --shadow: 0 18px 45px rgba(14, 36, 12, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        color: var(--text-main);
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 32%),
+          linear-gradient(160deg, #f7f4ea 0%, #e6ead8 58%, #dce4cf 100%);
+      }
+
+      .page {
+        width: min(1280px, calc(100% - 32px));
+        margin: 24px auto;
+        display: grid;
+        grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+      }
+
+      .controls {
+        padding: 24px;
+      }
+
+      .controls h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        line-height: 1;
+        letter-spacing: 0.02em;
+      }
+
+      .controls p {
+        margin: 0 0 24px;
+        color: var(--text-muted);
+        font-size: 0.98rem;
+        line-height: 1.5;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .field label {
+        font-size: 0.88rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        border: 1px solid rgba(40, 80, 46, 0.18);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font: inherit;
+        color: inherit;
+        background: rgba(255, 255, 255, 0.96);
+        transition: border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      .field input:focus,
+      .field select:focus {
+        outline: none;
+        border-color: rgba(37, 103, 20, 0.55);
+        box-shadow: 0 0 0 4px rgba(68, 139, 47, 0.14);
+      }
+
+      .field input[type="file"] {
+        padding: 10px 12px;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 140px;
+        gap: 10px;
+      }
+
+      .date-picker {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 52px;
+        gap: 10px;
+      }
+
+      .date-picker button {
+        appearance: none;
+        border: 1px solid rgba(40, 80, 46, 0.18);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.96);
+        color: var(--text-main);
+        font: inherit;
+        font-size: 1.15rem;
+        cursor: pointer;
+        transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+      }
+
+      .date-picker button:hover {
+        transform: translateY(-1px);
+      }
+
+      .date-picker button:focus {
+        outline: none;
+        border-color: rgba(37, 103, 20, 0.55);
+        box-shadow: 0 0 0 4px rgba(68, 139, 47, 0.14);
+      }
+
+      .native-date {
+        position: absolute;
+        inset: 0 0 0 auto;
+        width: 52px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .native-date.fallback-active {
+        pointer-events: auto;
+        z-index: 2;
+        cursor: pointer;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .actions button {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 13px 18px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+        box-shadow: 0 12px 24px rgba(39, 93, 22, 0.28);
+        transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+      }
+
+      .actions button.secondary {
+        background: linear-gradient(135deg, #496d0c 0%, #304b08 100%);
+      }
+
+      .actions button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 26px rgba(39, 93, 22, 0.3);
+      }
+
+      .actions button:active {
+        transform: translateY(0);
+      }
+
+      .actions button:disabled {
+        opacity: 0.6;
+        cursor: progress;
+      }
+
+      .hint {
+        margin-top: 14px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .photo-tools {
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: rgba(47, 127, 26, 0.08);
+        border: 1px solid rgba(40, 80, 46, 0.12);
+      }
+
+      .photo-tools-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .photo-tools-header span {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+      }
+
+      .photo-tools h3 {
+        margin: 0;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .photo-tools p {
+        margin: 8px 0 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+
+      .photo-tools-grid {
+        margin-top: 14px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .photo-tools-grid label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .photo-tools-grid input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+
+      .photo-tool-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .photo-tool-row output {
+        min-width: 3.5ch;
+        text-align: right;
+        font-weight: 700;
+        color: var(--accent-dark);
+      }
+
+      .photo-reset {
+        appearance: none;
+        justify-self: start;
+        border: 1px solid rgba(40, 80, 46, 0.2);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--text-main);
+        font: inherit;
+        font-weight: 700;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .photo-reset:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .preview-panel {
+        padding: 20px;
+      }
+
+      .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .preview-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .preview-header span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .preview-frame {
+        border-radius: 20px;
+        overflow: auto;
+        background:
+          linear-gradient(135deg, rgba(250, 248, 240, 0.92), rgba(233, 240, 221, 0.94));
+        border: 1px solid rgba(40, 80, 46, 0.1);
+        padding: 18px;
+      }
+
+      .preview-actions {
+        margin-top: 16px;
+        justify-content: center;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #2f7b15;
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(21, 61, 13, 0.28);
+        touch-action: none;
+      }
+
+      @media (max-width: 980px) {
+        .page {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          width: min(100% - 20px, 900px);
+          margin: 10px auto 18px;
+          gap: 16px;
+        }
+
+        .controls,
+        .preview-panel {
+          padding: 18px;
+        }
+
+        .preview-frame {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel controls">
+        <h1>Memorial Card Creator</h1>
+        <p id="appDescription">
+          Enter the details, upload a portrait, and download a ready-to-share
+          memorial card image.
+        </p>
+
+        <form class="form-grid" id="card-form">
+          <div class="field">
+            <label for="language" id="languageLabel">Card Language</label>
+            <select id="language" name="language">
+              <option value="EN">English</option>
+              <option value="GU">Gujarati</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="gender" id="genderLabel">Gender</label>
+            <select id="gender" name="gender">
+              <option value="FEMALE">Female</option>
+              <option value="MALE">Male</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="name" id="nameLabel">Deceased Name</label>
+            <input id="name" name="name" type="text" />
+          </div>
+
+          <div class="field">
+            <label for="age" id="ageLabel">Age</label>
+            <div class="field-row">
+              <input id="age" name="age" type="number" min="0" max="150" step="1" inputmode="numeric" />
+              <select id="ageUnit" name="ageUnit">
+                <option value="YEARS">Year</option>
+                <option value="MONTHS">Month</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="resident" id="residentLabel">Resident / Place</label>
+            <input id="resident" name="resident" type="text" />
+          </div>
+
+          <div class="field">
+            <label for="deceasedDate" id="deceasedDateLabel">Deceased Date</label>
+            <div class="date-picker">
+              <input id="deceasedDate" name="deceasedDate" type="text" inputmode="numeric" placeholder="DD-MMM-YYYY" />
+              <button type="button" data-picker-target="deceasedDateNative" aria-label="Open deceased date calendar">📅</button>
+              <input id="deceasedDateNative" class="native-date" type="date" tabindex="-1" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="maiyatDate" id="maiyatDateLabel">Maiyat Date</label>
+            <div class="date-picker">
+              <input id="maiyatDate" name="maiyatDate" type="text" inputmode="numeric" placeholder="DD-MMM-YYYY" />
+              <button type="button" data-picker-target="maiyatDateNative" aria-label="Open maiyat date calendar">📅</button>
+              <input id="maiyatDateNative" class="native-date" type="date" tabindex="-1" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="burialPlace" id="burialPlaceLabel">Burial Place</label>
+            <input id="burialPlace" name="burialPlace" type="text" />
+          </div>
+
+          <div class="field">
+            <label for="time" id="timeLabel">Time</label>
+            <input id="time" name="time" type="time" />
+          </div>
+
+          <div class="field">
+            <label for="photo" id="photoLabel">Portrait Photo</label>
+            <input id="photo" name="photo" type="file" accept="image/*" />
+          </div>
+
+          <div class="photo-tools">
+            <div class="photo-tools-header">
+              <h3 id="photoToolsTitle">Photo Adjustments</h3>
+              <span id="photoToolsHint">Drag in preview</span>
+            </div>
+            <p id="photoToolsDescription">Move the portrait directly on the card preview and use zoom to resize it.</p>
+            <div class="photo-tools-grid">
+              <div class="field">
+                <label for="photoScale" id="photoScaleLabel">Zoom</label>
+                <div class="photo-tool-row">
+                  <input id="photoScale" name="photoScale" type="range" min="100" max="250" step="1" value="100" />
+                  <output id="photoScaleValue" for="photoScale">100%</output>
+                </div>
+              </div>
+              <button type="button" class="photo-reset" id="resetPhotoAdjustments">Reset Photo Position</button>
+            </div>
+          </div>
+
+        </form>
+
+        <div class="hint" id="previewHint">
+          The preview updates automatically. Downloads use the same rendered card.
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="preview-header">
+          <h2 id="previewTitle">Live Preview</h2>
+          <span id="previewSubtitle">Landscape poster</span>
+        </div>
+        <div class="preview-frame">
+          <canvas id="cardCanvas" width="1600" height="1200"></canvas>
+        </div>
+        <div class="actions preview-actions">
+          <button type="button" id="downloadPng">Download PNG</button>
+          <button type="button" class="secondary" id="downloadJpg">Download JPEG</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const CARD_WIDTH = 1600;
+      const CARD_HEIGHT = 1200;
+      const EXPORT_SCALE = 2;
+
+      const canvas = document.getElementById("cardCanvas");
+      const ctx = canvas.getContext("2d");
+      const form = document.getElementById("card-form");
+      const photoInput = document.getElementById("photo");
+      const deceasedDateNative = document.getElementById("deceasedDateNative");
+      const maiyatDateNative = document.getElementById("maiyatDateNative");
+      const pngButton = document.getElementById("downloadPng");
+      const jpgButton = document.getElementById("downloadJpg");
+      const heading = document.querySelector(".controls h1");
+      const appDescription = document.getElementById("appDescription");
+      const previewTitle = document.getElementById("previewTitle");
+      const previewSubtitle = document.getElementById("previewSubtitle");
+      const previewHint = document.getElementById("previewHint");
+      const photoScaleInput = document.getElementById("photoScale");
+      const photoScaleValue = document.getElementById("photoScaleValue");
+      const resetPhotoAdjustmentsButton = document.getElementById("resetPhotoAdjustments");
+
+      const uiTextElements = {
+        languageLabel: document.getElementById("languageLabel"),
+        genderLabel: document.getElementById("genderLabel"),
+        nameLabel: document.getElementById("nameLabel"),
+        ageLabel: document.getElementById("ageLabel"),
+        residentLabel: document.getElementById("residentLabel"),
+        deceasedDateLabel: document.getElementById("deceasedDateLabel"),
+        maiyatDateLabel: document.getElementById("maiyatDateLabel"),
+        burialPlaceLabel: document.getElementById("burialPlaceLabel"),
+        timeLabel: document.getElementById("timeLabel"),
+        photoLabel: document.getElementById("photoLabel"),
+        photoToolsTitle: document.getElementById("photoToolsTitle"),
+        photoToolsHint: document.getElementById("photoToolsHint"),
+        photoToolsDescription: document.getElementById("photoToolsDescription"),
+        photoScaleLabel: document.getElementById("photoScaleLabel"),
+      };
+
+      const translations = {
+        EN: {
+          appTitle: "Memorial Card Creator",
+          appDescription:
+            "Enter the details, upload a portrait, and download a ready-to-share memorial card image.",
+          previewTitle: "Live Preview",
+          previewSubtitle: "Landscape poster",
+          previewHint: "The preview updates automatically. Downloads use the same rendered card.",
+          downloadPng: "Download PNG",
+          downloadJpg: "Download JPEG",
+          resetPhotoAdjustments: "Reset Photo Position",
+          languageLabel: "Card Language",
+          genderLabel: "Gender",
+          nameLabel: "Deceased Name",
+          ageLabel: "Age",
+          residentLabel: "Resident / Place",
+          deceasedDateLabel: "Deceased Date",
+          maiyatDateLabel: "Maiyat Date",
+          burialPlaceLabel: "Burial Place",
+          timeLabel: "Time",
+          photoLabel: "Portrait Photo",
+          photoToolsTitle: "Photo Adjustments",
+          photoToolsHint: "Drag in preview",
+          photoToolsDescription:
+            "Move the portrait directly on the card preview and use zoom to resize it.",
+          photoScaleLabel: "Zoom",
+          languageOptions: { EN: "English", GU: "Gujarati" },
+          genderOptions: { FEMALE: "Female", MALE: "Male" },
+          ageUnitOptions: { YEARS: "Year", MONTHS: "Month" },
+          monthNames: [
+            "JANUARY",
+            "FEBRUARY",
+            "MARCH",
+            "APRIL",
+            "MAY",
+            "JUNE",
+            "JULY",
+            "AUGUST",
+            "SEPTEMBER",
+            "OCTOBER",
+            "NOVEMBER",
+            "DECEMBER",
+          ],
+          dayNames: {
+            Sunday: "SUNDAY",
+            Monday: "MONDAY",
+            Tuesday: "TUESDAY",
+            Wednesday: "WEDNESDAY",
+            Thursday: "THURSDAY",
+            Friday: "FRIDAY",
+            Saturday: "SATURDAY",
+          },
+          cardTopArabic: "Inna Lillahi wa Inna Ilayhi Raji’un",
+          cardTopMeaning: "(We Surely Belong to Allah and To Him We Shall Return)",
+          soulRestMale: "MAY HIS SOUL REST IN ETERNAL PEACE",
+          soulRestFemale: "MAY HER SOUL REST IN ETERNAL PEACE",
+          announcement: "MAIYAT ANNOUNCEMENT",
+          fieldName: "NAME",
+          fieldAge: "AGE",
+          fieldResident: "RESIDENT OF",
+          fieldDeceasedDate: "DECEASED DATE",
+          fieldMaiyatDate: "MAIYAT DATE",
+          fieldBurialPlace: "BURIAL PLACE",
+          fieldTime: "TIME",
+          unitYears: "YEARS",
+          unitMonths: "MONTHS",
+          emptyName: "ENTER NAME",
+          informFooter: "PLEASE INFORM OTHER JAMATI MEMBER",
+          uploadPhoto: "UPLOAD PHOTO",
+        },
+        GU: {
+          appTitle: "સ્મૃતિ કાર્ડ બનાવનાર",
+          appDescription:
+            "વિગતો ભરો, ફોટો અપલોડ કરો અને શેર કરવા તૈયાર સ્મૃતિ કાર્ડ ડાઉનલોડ કરો.",
+          previewTitle: "લાઇવ પ્રિવ્યુ",
+          previewSubtitle: "લેન્ડસ્કેપ પોસ્ટર",
+          previewHint: "પ્રિવ્યુ આપમેળે અપડેટ થાય છે. ડાઉનલોડમાં એ જ રેન્ડર થયેલું કાર્ડ મળશે.",
+          downloadPng: "PNG ડાઉનલોડ કરો",
+          downloadJpg: "JPEG ડાઉનલોડ કરો",
+          resetPhotoAdjustments: "ફોટો સ્થિતિ રીસેટ કરો",
+          languageLabel: "કાર્ડ ભાષા",
+          genderLabel: "લિંગ",
+          nameLabel: "મરહૂમનું નામ",
+          ageLabel: "ઉંમર",
+          residentLabel: "રહેવાસ / સ્થળ",
+          deceasedDateLabel: "વફાત તારીખ",
+          maiyatDateLabel: "મૈયત તારીખ",
+          burialPlaceLabel: "દફન સ્થળ",
+          timeLabel: "સમય",
+          photoLabel: "ફોટો",
+          photoToolsTitle: "ફોટો સમાયોજન",
+          photoToolsHint: "પ્રિવ્યુમાં ખેંચો",
+          photoToolsDescription:
+            "કાર્ડ પ્રિવ્યુમાં ફોટો સીધો ખેંચો અને કદ બદલવા માટે ઝૂમ વાપરો.",
+          photoScaleLabel: "ઝૂમ",
+          languageOptions: { EN: "English", GU: "ગુજરાતી" },
+          genderOptions: { FEMALE: "સ્ત્રી", MALE: "પુરુષ" },
+          ageUnitOptions: { YEARS: "વર્ષ", MONTHS: "મહિનો" },
+          monthNames: [
+            "જાન્યુઆરી",
+            "ફેબ્રુઆરી",
+            "માર્ચ",
+            "એપ્રિલ",
+            "મે",
+            "જૂન",
+            "જુલાઈ",
+            "ઓગસ્ટ",
+            "સપ્ટેમ્બર",
+            "ઓક્ટોબર",
+            "નવેમ્બર",
+            "ડિસેમ્બર",
+          ],
+          dayNames: {
+            Sunday: "રવિવાર",
+            Monday: "સોમવાર",
+            Tuesday: "મંગળવાર",
+            Wednesday: "બુધવાર",
+            Thursday: "ગુરુવાર",
+            Friday: "શુક્રવાર",
+            Saturday: "શનિવાર",
+          },
+          cardTopArabic: "ઇન્ના લિલ્લાહિ વ ઇન્ના ઇલૈહિ રાજીઊન",
+          cardTopMeaning: "(અમે અલ્લાહના છીએ અને તેની તરફ જ પરત ફરવાના છીએ)",
+          soulRestMale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
+          soulRestFemale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
+          announcement: "મૈયતની જાણ",
+          fieldName: "નામ",
+          fieldAge: "ઉંમર",
+          fieldResident: "રહેવાસી",
+          fieldDeceasedDate: "વફાત તારીખ",
+          fieldMaiyatDate: "મૈયત તારીખ",
+          fieldBurialPlace: "દફન સ્થળ",
+          fieldTime: "સમય",
+          unitYears: "વર્ષ",
+          unitMonths: "મહિના",
+          emptyName: "અહીં નામ લખો",
+          informFooter: "મહેરબાની કરીને બીજા જમાતી સભ્યોને જાણ કરો",
+          uploadPhoto: "ફોટો અપલોડ કરો",
+        },
+      };
+
+      const photoFrame = {
+        x: 1120,
+        y: 540,
+        width: 420,
+        height: 430,
+        radius: 18,
+      };
+
+      const state = {
+        language: "EN",
+        name: "",
+        age: "",
+        ageUnit: "YEARS",
+        resident: "",
+        burialPlace: "",
+        gender: "FEMALE",
+        deceasedDate: "",
+        maiyatDate: "",
+        time: "00:00",
+        photo: null,
+        photoOffsetX: 0,
+        photoOffsetY: 0,
+        photoScale: 1,
+      };
+
+      const interactionState = {
+        dragActive: false,
+        pointerId: null,
+        startX: 0,
+        startY: 0,
+        startOffsetX: 0,
+        startOffsetY: 0,
+      };
+
+      const monthsShort = [
+        "JAN",
+        "FEB",
+        "MAR",
+        "APR",
+        "MAY",
+        "JUN",
+        "JUL",
+        "AUG",
+        "SEP",
+        "OCT",
+        "NOV",
+        "DEC",
+      ];
+
+      canvas.width = CARD_WIDTH;
+      canvas.height = CARD_HEIGHT;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      function getLocale() {
+        return translations[state.language] || translations.EN;
+      }
+
+      function getCanvasFont(weight, size) {
+        const family =
+          state.language === "GU"
+            ? '"Noto Sans Gujarati", "Nirmala UI", "Shruti", sans-serif'
+            : '"Trebuchet MS", "Segoe UI", sans-serif';
+        return `${weight} ${size}px ${family}`;
+      }
+
+      function formatInputDate(date) {
+        const year = date.getFullYear();
+        const month = monthsShort[date.getMonth()];
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${day}-${month}-${year}`;
+      }
+
+      function formatIsoDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function getTodayDisplayDate() {
+        const now = new Date();
+        return formatInputDate(now);
+      }
+
+      state.deceasedDate = getTodayDisplayDate();
+      state.maiyatDate = getTodayDisplayDate();
+
+      form.language.value = state.language;
+      form.name.value = state.name;
+      form.age.value = state.age;
+      form.ageUnit.value = state.ageUnit;
+      form.resident.value = state.resident;
+      form.burialPlace.value = state.burialPlace;
+      form.gender.value = state.gender;
+      form.deceasedDate.value = state.deceasedDate;
+      form.maiyatDate.value = state.maiyatDate;
+      deceasedDateNative.value = formatIsoDate(parseDisplayDate(state.deceasedDate));
+      maiyatDateNative.value = formatIsoDate(parseDisplayDate(state.maiyatDate));
+      form.time.value = state.time;
+      photoScaleInput.value = String(Math.round(state.photoScale * 100));
+      photoScaleValue.value = `${Math.round(state.photoScale * 100)}%`;
+      updatePhotoControls();
+
+      function uppercase(value) {
+        return value ? String(value).trim().toUpperCase() : "";
+      }
+
+      function normalizeAgeValue(value) {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) {
+          return "";
+        }
+
+        if (!/^\d+$/.test(trimmed)) {
+          return "";
+        }
+
+        const age = Number(trimmed);
+        if (!Number.isInteger(age) || age < 0 || age > 150) {
+          return "";
+        }
+
+        return String(age);
+      }
+
+      function parseDisplayDate(value) {
+        if (!value) {
+          return null;
+        }
+
+        const match = String(value)
+          .trim()
+          .match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+        if (!match) {
+          return null;
+        }
+
+        const day = Number(match[1]);
+        const monthIndex = monthsShort.indexOf(match[2].toUpperCase());
+        const year = Number(match[3]);
+        if (monthIndex < 0) {
+          return null;
+        }
+
+        const date = new Date(year, monthIndex, day);
+        if (
+          Number.isNaN(date.getTime()) ||
+          date.getFullYear() !== year ||
+          date.getMonth() !== monthIndex ||
+          date.getDate() !== day
+        ) {
+          return null;
+        }
+
+        return date;
+      }
+
+      function normalizeDisplayDate(value) {
+        const date = parseDisplayDate(value);
+        return date ? formatInputDate(date) : uppercase(value);
+      }
+
+      function normalizeIsoDate(value) {
+        if (!value) {
+          return "";
+        }
+
+        const parts = value.split("-").map(Number);
+        if (parts.length !== 3 || parts.some(Number.isNaN)) {
+          return "";
+        }
+
+        const [year, month, day] = parts;
+        const date = new Date(year, month - 1, day);
+        if (
+          Number.isNaN(date.getTime()) ||
+          date.getFullYear() !== year ||
+          date.getMonth() !== month - 1 ||
+          date.getDate() !== day
+        ) {
+          return "";
+        }
+
+        return formatInputDate(date);
+      }
+
+      function formatDate(value) {
+        const date = parseDisplayDate(value);
+        if (!date) {
+          return state.language === "GU" ? String(value || "").trim() : uppercase(value);
+        }
+
+        const day = String(date.getDate()).padStart(2, "0");
+        const monthLabel = getLocale().monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day}-${monthLabel}-${year}`;
+      }
+
+      function getDayName(value) {
+        const date = parseDisplayDate(value);
+        if (!date) {
+          return "";
+        }
+
+        const englishDay = date.toLocaleDateString("en-US", { weekday: "long" });
+        return getLocale().dayNames[englishDay] || englishDay.toUpperCase();
+      }
+
+      function formatTime(value, relatedDate) {
+        if (!value) {
+          return "";
+        }
+
+        const [hoursRaw, minutesRaw] = value.split(":").map(Number);
+        if ([hoursRaw, minutesRaw].some(Number.isNaN)) {
+          return state.language === "GU" ? String(value).trim() : uppercase(value);
+        }
+
+        const suffix = hoursRaw >= 12 ? "PM" : "AM";
+        const hour12 = hoursRaw % 12 || 12;
+        const timeLabel = `${hour12}:${String(minutesRaw).padStart(2, "0")} ${suffix}`;
+        const dayName = getDayName(relatedDate);
+        return dayName ? `${timeLabel} (${dayName})` : timeLabel;
+      }
+
+      function wrapText(context, text, maxWidth) {
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        if (!words.length) {
+          return [""];
+        }
+
+        const lines = [];
+        let line = words[0];
+
+        for (let i = 1; i < words.length; i += 1) {
+          const candidate = `${line} ${words[i]}`;
+          if (context.measureText(candidate).width <= maxWidth) {
+            line = candidate;
+          } else {
+            lines.push(line);
+            line = words[i];
+          }
+        }
+
+        lines.push(line);
+        return lines;
+      }
+
+      function fitText(context, text, maxWidth, baseSize, minSize) {
+        let fontSize = baseSize;
+        while (fontSize > minSize) {
+          context.font = getCanvasFont("800", fontSize);
+          if (context.measureText(text).width <= maxWidth) {
+            return fontSize;
+          }
+          fontSize -= 2;
+        }
+        return minSize;
+      }
+
+      function syncState() {
+        state.language = uppercase(form.language.value || "EN");
+        state.name = uppercase(form.name.value);
+        state.age = normalizeAgeValue(form.age.value);
+        state.ageUnit = uppercase(form.ageUnit.value || "YEARS");
+        state.resident = form.resident.value.trim();
+        state.burialPlace = form.burialPlace.value.trim();
+        state.gender = uppercase(form.gender.value || "FEMALE");
+        state.deceasedDate = normalizeDisplayDate(form.deceasedDate.value);
+        state.maiyatDate = normalizeDisplayDate(form.maiyatDate.value);
+        state.time = form.time.value;
+
+        form.deceasedDate.value = state.deceasedDate;
+        form.maiyatDate.value = state.maiyatDate;
+        const deceasedDate = parseDisplayDate(state.deceasedDate);
+        const maiyatDate = parseDisplayDate(state.maiyatDate);
+        deceasedDateNative.value = deceasedDate ? formatIsoDate(deceasedDate) : "";
+        maiyatDateNative.value = maiyatDate ? formatIsoDate(maiyatDate) : "";
+      }
+
+      function commitNormalizedAge() {
+        form.age.value = normalizeAgeValue(form.age.value);
+      }
+
+      function applyUiTranslations() {
+        const locale = getLocale();
+
+        heading.textContent = locale.appTitle;
+        appDescription.textContent = locale.appDescription;
+        previewTitle.textContent = locale.previewTitle;
+        previewSubtitle.textContent = locale.previewSubtitle;
+        previewHint.textContent = locale.previewHint;
+        pngButton.textContent = locale.downloadPng;
+        jpgButton.textContent = locale.downloadJpg;
+        resetPhotoAdjustmentsButton.textContent = locale.resetPhotoAdjustments;
+
+        Object.entries(uiTextElements).forEach(([key, element]) => {
+          if (element && locale[key]) {
+            element.textContent = locale[key];
+          }
+        });
+
+        form.language.options[0].textContent = locale.languageOptions.EN;
+        form.language.options[1].textContent = locale.languageOptions.GU;
+        form.gender.options[0].textContent = locale.genderOptions.FEMALE;
+        form.gender.options[1].textContent = locale.genderOptions.MALE;
+        form.ageUnit.options[0].textContent = locale.ageUnitOptions.YEARS;
+        form.ageUnit.options[1].textContent = locale.ageUnitOptions.MONTHS;
+      }
+
+      function getImageSourceDimensions(image) {
+        return {
+          width: image.naturalWidth || image.videoWidth || image.width,
+          height: image.naturalHeight || image.videoHeight || image.height,
+        };
+      }
+
+      function getPhotoDrawMetrics(image) {
+        const { width: imageWidth, height: imageHeight } = getImageSourceDimensions(image);
+        const imgRatio = imageWidth / imageHeight;
+        const boxRatio = photoFrame.width / photoFrame.height;
+        let baseWidth;
+        let baseHeight;
+
+        if (imgRatio > boxRatio) {
+          baseHeight = photoFrame.height;
+          baseWidth = baseHeight * imgRatio;
+        } else {
+          baseWidth = photoFrame.width;
+          baseHeight = baseWidth / imgRatio;
+        }
+
+        const drawWidth = baseWidth * state.photoScale;
+        const drawHeight = baseHeight * state.photoScale;
+        const minOffsetX = photoFrame.width - drawWidth;
+        const minOffsetY = photoFrame.height - drawHeight;
+
+        return {
+          drawWidth,
+          drawHeight,
+          minOffsetX: Math.min(0, minOffsetX),
+          maxOffsetX: 0,
+          minOffsetY: Math.min(0, minOffsetY),
+          maxOffsetY: 0,
+        };
+      }
+
+      function clampPhotoOffsets() {
+        if (!state.photo) {
+          state.photoOffsetX = 0;
+          state.photoOffsetY = 0;
+          return;
+        }
+
+        const metrics = getPhotoDrawMetrics(state.photo);
+        const centeredOffsetX = (photoFrame.width - metrics.drawWidth) / 2;
+        const centeredOffsetY = (photoFrame.height - metrics.drawHeight) / 2;
+
+        if (metrics.drawWidth <= photoFrame.width) {
+          state.photoOffsetX = centeredOffsetX;
+        } else {
+          state.photoOffsetX = Math.min(
+            metrics.maxOffsetX,
+            Math.max(metrics.minOffsetX, state.photoOffsetX)
+          );
+        }
+
+        if (metrics.drawHeight <= photoFrame.height) {
+          state.photoOffsetY = centeredOffsetY;
+        } else {
+          state.photoOffsetY = Math.min(
+            metrics.maxOffsetY,
+            Math.max(metrics.minOffsetY, state.photoOffsetY)
+          );
+        }
+      }
+
+      function resetPhotoAdjustments() {
+        state.photoScale = 1;
+        state.photoOffsetX = 0;
+        state.photoOffsetY = 0;
+        clampPhotoOffsets();
+        photoScaleInput.value = "100";
+        photoScaleValue.value = "100%";
+        updatePhotoControls();
+      }
+
+      function updatePhotoControls() {
+        const hasPhoto = Boolean(state.photo);
+        photoScaleInput.disabled = !hasPhoto;
+        resetPhotoAdjustmentsButton.disabled = !hasPhoto;
+      }
+
+      function roundedRectPath(context, x, y, width, height, radius) {
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.lineTo(x + width - radius, y);
+        context.quadraticCurveTo(x + width, y, x + width, y + radius);
+        context.lineTo(x + width, y + height - radius);
+        context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        context.lineTo(x + radius, y + height);
+        context.quadraticCurveTo(x, y + height, x, y + height - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+        context.closePath();
+      }
+
+      function drawRoundedImage(context, image, x, y, width, height, radius) {
+        context.save();
+        roundedRectPath(context, x, y, width, height, radius);
+        context.clip();
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
+
+        const metrics = getPhotoDrawMetrics(image);
+        context.drawImage(
+          image,
+          x + state.photoOffsetX,
+          y + state.photoOffsetY,
+          metrics.drawWidth,
+          metrics.drawHeight
+        );
+        context.restore();
+      }
+
+      function drawPhotoPlaceholder(context, x, y, width, height, radius) {
+        context.save();
+        context.fillStyle = "rgba(255, 255, 255, 0.9)";
+        context.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        context.lineWidth = 4;
+        roundedRectPath(context, x, y, width, height, radius);
+        context.fill();
+        context.stroke();
+
+        const centerX = x + width / 2;
+        const centerY = y + height / 2 - 22;
+
+        context.strokeStyle = "#6c8368";
+        context.lineWidth = 10;
+        context.beginPath();
+        context.arc(centerX, centerY - 42, 42, 0, Math.PI * 2);
+        context.stroke();
+
+        context.beginPath();
+        context.arc(centerX, centerY + 58, 82, Math.PI, 0);
+        context.stroke();
+
+        context.fillStyle = "#4b5e47";
+        context.font = getCanvasFont("700", 36);
+        context.textAlign = "center";
+        context.fillText(getLocale().uploadPhoto, centerX, y + height - 48);
+        context.restore();
+      }
+
+      function renderCard(
+        targetContext = ctx,
+        targetWidth = CARD_WIDTH,
+        targetHeight = CARD_HEIGHT
+      ) {
+        const locale = getLocale();
+        const soulRestText = state.gender === "MALE" ? locale.soulRestMale : locale.soulRestFemale;
+        const outerRadius = 46;
+        const outerInset = 6;
+        const innerInset = 22;
+        const innerRadius = 28;
+        const scale = targetWidth / CARD_WIDTH;
+
+        targetContext.clearRect(0, 0, targetWidth, targetHeight);
+        targetContext.save();
+        targetContext.scale(scale, scale);
+        roundedRectPath(
+          targetContext,
+          outerInset,
+          outerInset,
+          CARD_WIDTH - outerInset * 2,
+          CARD_HEIGHT - outerInset * 2,
+          outerRadius
+        );
+        targetContext.clip();
+
+        targetContext.fillStyle = "#317d14";
+        targetContext.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+
+        targetContext.lineWidth = 4;
+        targetContext.strokeStyle = "rgba(255, 255, 255, 0.82)";
+        roundedRectPath(
+          targetContext,
+          innerInset,
+          innerInset,
+          CARD_WIDTH - innerInset * 2,
+          CARD_HEIGHT - innerInset * 2,
+          innerRadius
+        );
+        targetContext.stroke();
+
+        targetContext.fillStyle = "#ffffff";
+        targetContext.textAlign = "center";
+
+        targetContext.font = getCanvasFont("800", state.language === "GU" ? 64 : 74);
+        targetContext.fillStyle = "#0f57cc";
+        targetContext.fillText(locale.cardTopArabic, CARD_WIDTH / 2, 96);
+
+        targetContext.fillStyle = "#ffffff";
+        targetContext.font = getCanvasFont("700", state.language === "GU" ? 34 : 42);
+        targetContext.fillText(locale.cardTopMeaning, CARD_WIDTH / 2, 190);
+
+        targetContext.font = getCanvasFont("800", state.language === "GU" ? 54 : 66);
+        targetContext.fillText(soulRestText, CARD_WIDTH / 2, 282);
+        targetContext.fillText(locale.announcement, CARD_WIDTH / 2, 376);
+
+        targetContext.textAlign = "left";
+        targetContext.fillStyle = "#ffffff";
+
+        const leftX = 36;
+        const contentWidth = 910;
+        let cursorY = 470;
+
+        const nameValue = state.name || locale.emptyName;
+        const nameLineText = `${locale.fieldName}: ${nameValue}`;
+        const nameFont = fitText(targetContext, nameLineText, contentWidth, 62, 42);
+        targetContext.font = getCanvasFont("800", nameFont);
+        const nameLines = wrapText(targetContext, nameLineText, contentWidth);
+        nameLines.forEach((line) => {
+          targetContext.fillText(line, leftX, cursorY);
+          cursorY += nameFont + 14;
+        });
+
+        const lines = [
+          `${locale.fieldAge}: ${state.age || "--"} ${
+            state.ageUnit === "MONTHS" ? locale.unitMonths : locale.unitYears
+          }`,
+          `${locale.fieldResident}: ${
+            state.language === "GU" ? state.resident || "--" : uppercase(state.resident) || "--"
+          }`,
+          `${locale.fieldDeceasedDate}: ${formatDate(state.deceasedDate) || "--"}`,
+          `${locale.fieldMaiyatDate}: ${formatDate(state.maiyatDate) || "--"}`,
+          `${locale.fieldBurialPlace}: ${
+            state.language === "GU"
+              ? state.burialPlace || "--"
+              : uppercase(state.burialPlace) || "--"
+          }`,
+          `${locale.fieldTime}: ${formatTime(state.time, state.maiyatDate) || "--"}`,
+        ];
+
+        targetContext.font = getCanvasFont("800", state.language === "GU" ? 50 : 58);
+        lines.forEach((line) => {
+          const wrapped = wrapText(targetContext, line, contentWidth);
+          wrapped.forEach((segment) => {
+            targetContext.fillText(segment, leftX, cursorY);
+            cursorY += 72;
+          });
+          cursorY += 18;
+        });
+
+        if (state.photo) {
+          clampPhotoOffsets();
+          drawRoundedImage(
+            targetContext,
+            state.photo,
+            photoFrame.x,
+            photoFrame.y,
+            photoFrame.width,
+            photoFrame.height,
+            photoFrame.radius
+          );
+          targetContext.save();
+          targetContext.lineWidth = 4;
+          targetContext.strokeStyle = "rgba(255, 255, 255, 0.92)";
+          roundedRectPath(
+            targetContext,
+            photoFrame.x,
+            photoFrame.y,
+            photoFrame.width,
+            photoFrame.height,
+            photoFrame.radius
+          );
+          targetContext.stroke();
+          targetContext.restore();
+        } else {
+          drawPhotoPlaceholder(
+            targetContext,
+            photoFrame.x,
+            photoFrame.y,
+            photoFrame.width,
+            photoFrame.height,
+            photoFrame.radius
+          );
+        }
+
+        targetContext.textAlign = "center";
+        targetContext.font = getCanvasFont("800", state.language === "GU" ? 42 : 52);
+        targetContext.fillStyle = "#ffffff";
+        targetContext.fillText(locale.informFooter, CARD_WIDTH / 2, CARD_HEIGHT - 84);
+        targetContext.restore();
+      }
+
+      function drawCard() {
+        syncState();
+        applyUiTranslations();
+        renderCard();
+      }
+
+      function readImage(file) {
+        if (!file) {
+          state.photo = null;
+          resetPhotoAdjustments();
+          drawCard();
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const image = new Image();
+          image.onload = () => {
+            state.photo = image;
+            resetPhotoAdjustments();
+            drawCard();
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function getCanvasPoint(event) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: (event.clientX - rect.left) * scaleX,
+          y: (event.clientY - rect.top) * scaleY,
+        };
+      }
+
+      function isPointInsidePhotoFrame(point) {
+        return (
+          point.x >= photoFrame.x &&
+          point.x <= photoFrame.x + photoFrame.width &&
+          point.y >= photoFrame.y &&
+          point.y <= photoFrame.y + photoFrame.height
+        );
+      }
+
+      function stopPhotoDrag(event) {
+        interactionState.dragActive = false;
+        interactionState.pointerId = null;
+        if (!state.photo) {
+          canvas.style.cursor = "default";
+          return;
+        }
+
+        const point = event ? getCanvasPoint(event) : null;
+        canvas.style.cursor = point && isPointInsidePhotoFrame(point) ? "grab" : "default";
+      }
+
+      function sanitizeFileName() {
+        const base = (state.name || "memorial-card")
+          .trim()
+          .toLocaleLowerCase()
+          .replace(/[^\p{L}\p{N}]+/gu, "-")
+          .replace(/^-+|-+$/g, "");
+        return base || "memorial-card";
+      }
+
+      function setButtonsDisabled(disabled) {
+        pngButton.disabled = disabled;
+        jpgButton.disabled = disabled;
+      }
+
+      function downloadCard(type) {
+        setButtonsDisabled(true);
+        const mimeType = type === "jpeg" ? "image/jpeg" : "image/png";
+        const extension = type === "jpeg" ? "jpg" : "png";
+        const quality = type === "jpeg" ? 0.92 : undefined;
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = CARD_WIDTH * EXPORT_SCALE;
+        exportCanvas.height = CARD_HEIGHT * EXPORT_SCALE;
+        const exportCtx = exportCanvas.getContext("2d");
+        exportCtx.imageSmoothingEnabled = true;
+        exportCtx.imageSmoothingQuality = "high";
+
+        if (type === "jpeg") {
+          exportCtx.fillStyle = "#f1efe7";
+          exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        }
+
+        renderCard(exportCtx, exportCanvas.width, exportCanvas.height);
+
+        exportCanvas.toBlob(
+          (blob) => {
+            setButtonsDisabled(false);
+            if (!blob) {
+              window.alert("Unable to generate the image file.");
+              return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${sanitizeFileName()}.${extension}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+          },
+          mimeType,
+          quality
+        );
+      }
+
+      form.addEventListener("input", drawCard);
+      form.addEventListener("change", drawCard);
+      form.age.addEventListener("blur", commitNormalizedAge);
+      photoScaleInput.addEventListener("input", () => {
+        state.photoScale = Number(photoScaleInput.value) / 100;
+        photoScaleValue.value = `${photoScaleInput.value}%`;
+        clampPhotoOffsets();
+        drawCard();
+      });
+      resetPhotoAdjustmentsButton.addEventListener("click", () => {
+        resetPhotoAdjustments();
+        drawCard();
+      });
+      photoInput.addEventListener("change", (event) => {
+        const [file] = event.target.files || [];
+        readImage(file);
+      });
+      canvas.addEventListener("pointerdown", (event) => {
+        if (!state.photo) {
+          return;
+        }
+
+        const point = getCanvasPoint(event);
+        if (!isPointInsidePhotoFrame(point)) {
+          return;
+        }
+
+        interactionState.dragActive = true;
+        interactionState.pointerId = event.pointerId;
+        interactionState.startX = point.x;
+        interactionState.startY = point.y;
+        interactionState.startOffsetX = state.photoOffsetX;
+        interactionState.startOffsetY = state.photoOffsetY;
+        canvas.setPointerCapture(event.pointerId);
+        canvas.style.cursor = "grabbing";
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.photo) {
+          canvas.style.cursor = "default";
+          return;
+        }
+
+        const point = getCanvasPoint(event);
+
+        if (!interactionState.dragActive) {
+          canvas.style.cursor = isPointInsidePhotoFrame(point) ? "grab" : "default";
+          return;
+        }
+
+        if (event.pointerId !== interactionState.pointerId) {
+          return;
+        }
+
+        state.photoOffsetX = interactionState.startOffsetX + (point.x - interactionState.startX);
+        state.photoOffsetY = interactionState.startOffsetY + (point.y - interactionState.startY);
+        clampPhotoOffsets();
+        renderCard();
+      });
+      canvas.addEventListener("pointerup", (event) => {
+        if (interactionState.dragActive && event.pointerId === interactionState.pointerId) {
+          canvas.releasePointerCapture(event.pointerId);
+          stopPhotoDrag(event);
+        }
+      });
+      canvas.addEventListener("pointercancel", () => stopPhotoDrag());
+      canvas.addEventListener("pointerleave", () => {
+        if (!interactionState.dragActive) {
+          canvas.style.cursor = "default";
+        }
+      });
+      deceasedDateNative.addEventListener("input", () => {
+        form.deceasedDate.value = normalizeIsoDate(deceasedDateNative.value);
+        drawCard();
+        deceasedDateNative.blur();
+      });
+      deceasedDateNative.addEventListener("change", () => {
+        form.deceasedDate.value = normalizeIsoDate(deceasedDateNative.value);
+        drawCard();
+        deceasedDateNative.blur();
+      });
+      maiyatDateNative.addEventListener("input", () => {
+        form.maiyatDate.value = normalizeIsoDate(maiyatDateNative.value);
+        drawCard();
+        maiyatDateNative.blur();
+      });
+      maiyatDateNative.addEventListener("change", () => {
+        form.maiyatDate.value = normalizeIsoDate(maiyatDateNative.value);
+        drawCard();
+        maiyatDateNative.blur();
+      });
+      document.querySelectorAll("[data-picker-target]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const picker = document.getElementById(button.dataset.pickerTarget);
+          if (!picker) {
+            return;
+          }
+
+          if (typeof picker.showPicker === "function") {
+            picker.showPicker();
+          } else {
+            picker.click();
+          }
+        });
+      });
+      if (typeof HTMLInputElement !== "undefined" && !("showPicker" in HTMLInputElement.prototype)) {
+        [deceasedDateNative, maiyatDateNative].forEach((picker) => {
+          picker.classList.add("fallback-active");
+          picker.removeAttribute("tabindex");
+          picker.removeAttribute("aria-hidden");
+        });
+      }
+      pngButton.addEventListener("click", () => downloadCard("png"));
+      jpgButton.addEventListener("click", () => downloadCard("jpeg"));
+
+      drawCard();
+    </script>
+  </body>
+</html>
