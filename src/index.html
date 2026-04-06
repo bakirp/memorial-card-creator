@@ -434,11 +434,6 @@
           </div>
 
           <div class="field">
-            <label for="burialPlace" id="burialPlaceLabel">Burial Place</label>
-            <input id="burialPlace" name="burialPlace" type="text" />
-          </div>
-
-          <div class="field">
             <label for="time" id="timeLabel">Time</label>
             <input id="time" name="time" type="time" />
           </div>
@@ -523,7 +518,6 @@
         residentLabel: document.getElementById("residentLabel"),
         deceasedDateLabel: document.getElementById("deceasedDateLabel"),
         maiyatDateLabel: document.getElementById("maiyatDateLabel"),
-        burialPlaceLabel: document.getElementById("burialPlaceLabel"),
         timeLabel: document.getElementById("timeLabel"),
         photoLabel: document.getElementById("photoLabel"),
         photoToolsTitle: document.getElementById("photoToolsTitle"),
@@ -560,7 +554,6 @@
           residentLabel: "Resident / Place",
           deceasedDateLabel: "Deceased Date",
           maiyatDateLabel: "Maiyat Date",
-          burialPlaceLabel: "Burial Place",
           timeLabel: "Time",
           photoLabel: "Portrait Photo",
           photoToolsTitle: "Photo Adjustments",
@@ -605,7 +598,6 @@
           fieldResident: "Resident Of",
           fieldDeceasedDate: "Deceased Date",
           fieldMaiyatDate: "Maiyat Date",
-          fieldBurialPlace: "Burial Place",
           fieldTime: "Time",
           unitYears: "Years",
           unitMonths: "Months",
@@ -640,7 +632,6 @@
           residentLabel: "રહેવાસ / સ્થળ",
           deceasedDateLabel: "વફાત તારીખ",
           maiyatDateLabel: "મૈયત તારીખ",
-          burialPlaceLabel: "દફન સ્થળ",
           timeLabel: "સમય",
           photoLabel: "ફોટો",
           photoToolsTitle: "ફોટો સમાયોજન",
@@ -685,7 +676,6 @@
           fieldResident: "રહેવાસી",
           fieldDeceasedDate: "વફાત તારીખ",
           fieldMaiyatDate: "મૈયત તારીખ",
-          fieldBurialPlace: "દફન સ્થળ",
           fieldTime: "સમય",
           unitYears: "વર્ષ",
           unitMonths: "મહિના",
@@ -709,7 +699,6 @@
         age: "",
         ageUnit: "YEARS",
         resident: "",
-        burialPlace: "",
         gender: "",
         deceasedDate: "",
         maiyatDate: "",
@@ -788,7 +777,6 @@
       form.age.value = state.age;
       form.ageUnit.value = state.ageUnit;
       form.resident.value = state.resident;
-      form.burialPlace.value = state.burialPlace;
       form.gender.value = state.gender;
       form.deceasedDate.value = state.deceasedDate;
       form.maiyatDate.value = state.maiyatDate;
@@ -974,8 +962,6 @@
         state.ageUnit = uppercase(form.ageUnit.value || "YEARS");
         state.resident =
           state.language === "GU" ? form.resident.value.trim() : properCase(form.resident.value);
-        state.burialPlace =
-          state.language === "GU" ? form.burialPlace.value.trim() : properCase(form.burialPlace.value);
         state.gender = uppercase(form.gender.value);
         state.deceasedDate = normalizeDisplayDate(form.deceasedDate.value);
         state.maiyatDate = normalizeDisplayDate(form.maiyatDate.value);
@@ -1263,7 +1249,6 @@
           `${locale.fieldResident}: ${state.resident || "--"}`,
           `${locale.fieldDeceasedDate}: ${formatDate(state.deceasedDate) || "--"}`,
           `${locale.fieldMaiyatDate}: ${formatDate(state.maiyatDate) || "--"}`,
-          `${locale.fieldBurialPlace}: ${state.burialPlace || "--"}`,
           `${locale.fieldTime}: ${formatTime(state.time, state.maiyatDate) || "--"}`,
         ];
 
