@@ -79,7 +79,6 @@
         font-size: 0.88rem;
         font-weight: 700;
         letter-spacing: 0.04em;
-        text-transform: uppercase;
       }
 
       .field input,
@@ -232,7 +231,6 @@
       .photo-tools-header span {
         color: var(--text-muted);
         font-size: 0.82rem;
-        text-transform: uppercase;
         letter-spacing: 0.05em;
         font-weight: 700;
       }
@@ -240,7 +238,6 @@
       .photo-tools h3 {
         margin: 0;
         font-size: 1rem;
-        text-transform: uppercase;
         letter-spacing: 0.04em;
       }
 
@@ -261,7 +258,6 @@
         font-size: 0.82rem;
         font-weight: 700;
         letter-spacing: 0.04em;
-        text-transform: uppercase;
       }
 
       .photo-tools-grid input[type="range"] {
@@ -315,7 +311,6 @@
       .preview-header h2 {
         margin: 0;
         font-size: 1.1rem;
-        text-transform: uppercase;
         letter-spacing: 0.05em;
       }
 
@@ -577,46 +572,46 @@
           genderOptions: { "": "Select gender", FEMALE: "Female", MALE: "Male" },
           ageUnitOptions: { YEARS: "Year", MONTHS: "Month" },
           monthNames: [
-            "JANUARY",
-            "FEBRUARY",
-            "MARCH",
-            "APRIL",
-            "MAY",
-            "JUNE",
-            "JULY",
-            "AUGUST",
-            "SEPTEMBER",
-            "OCTOBER",
-            "NOVEMBER",
-            "DECEMBER",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
           ],
           dayNames: {
-            Sunday: "SUNDAY",
-            Monday: "MONDAY",
-            Tuesday: "TUESDAY",
-            Wednesday: "WEDNESDAY",
-            Thursday: "THURSDAY",
-            Friday: "FRIDAY",
-            Saturday: "SATURDAY",
+            Sunday: "Sunday",
+            Monday: "Monday",
+            Tuesday: "Tuesday",
+            Wednesday: "Wednesday",
+            Thursday: "Thursday",
+            Friday: "Friday",
+            Saturday: "Saturday",
           },
-          cardTopArabic: "Inna Lillahi wa Inna Ilayhi Raji’un",
-          cardTopMeaning: "(We Surely Belong to Allah and To Him We Shall Return)",
-          soulRestNeutral: "MAY THEIR SOUL REST IN ETERNAL PEACE",
-          soulRestMale: "MAY HIS SOUL REST IN ETERNAL PEACE",
-          soulRestFemale: "MAY HER SOUL REST IN ETERNAL PEACE",
-          announcement: "MAIYAT ANNOUNCEMENT",
-          fieldName: "NAME",
-          fieldAge: "AGE",
-          fieldResident: "RESIDENT OF",
-          fieldDeceasedDate: "DECEASED DATE",
-          fieldMaiyatDate: "MAIYAT DATE",
-          fieldBurialPlace: "BURIAL PLACE",
-          fieldTime: "TIME",
-          unitYears: "YEARS",
-          unitMonths: "MONTHS",
-          emptyName: "ENTER NAME",
-          informFooter: "PLEASE INFORM OTHER JAMATI MEMBER",
-          uploadPhoto: "UPLOAD PHOTO",
+          cardTopArabic: "Inna Lillahi Wa Inna Ilaihi Raji’un",
+          cardTopMeaning: "(We surely belong to Allah and to him we shall return)",
+          soulRestNeutral: "May their soul rest in eternal peace",
+          soulRestMale: "May his soul rest in eternal peace",
+          soulRestFemale: "May her soul rest in eternal peace",
+          announcement: "Maiyat Announcement",
+          fieldName: "Name",
+          fieldAge: "Age",
+          fieldResident: "Resident Of",
+          fieldDeceasedDate: "Deceased Date",
+          fieldMaiyatDate: "Maiyat Date",
+          fieldBurialPlace: "Burial Place",
+          fieldTime: "Time",
+          unitYears: "Years",
+          unitMonths: "Months",
+          emptyName: "Enter Name",
+          informFooter: "Please inform other jamati member",
+          uploadPhoto: "Upload Photo",
         },
         GU: {
           appTitle: "સ્મૃતિ કાર્ડ બનાવનાર",
@@ -679,8 +674,8 @@
             Friday: "શુક્રવાર",
             Saturday: "શનિવાર",
           },
-          cardTopArabic: "ઇન્ના લિલ્લાહિ વ ઇન્ના ઇલૈહિ રાજીઊન",
-          cardTopMeaning: "(અમે અલ્લાહના છીએ અને તેની તરફ જ પરત ફરવાના છીએ)",
+          cardTopArabic: "ઇન્ના લિલ્લાહિ વ ઇન્નાઇલયહિ રાજેઉન",
+          cardTopMeaning: "(અમે ખરેખર અલ્લાહમાંથી આવ્યા છીએ અને અલ્લાહ તરફ પાછુ ફરવાનું છે.)",
           soulRestNeutral: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
           soulRestMale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
           soulRestFemale: "અલ્લાહ તેઓની આત્માને જન્નતમાં ઉચ્ચ મકામ અતા કરે",
@@ -806,6 +801,17 @@
 
       function uppercase(value) {
         return value ? String(value).trim().toUpperCase() : "";
+      }
+
+      function properCase(value) {
+        const normalized = String(value || "").trim().toLowerCase();
+        if (!normalized) {
+          return "";
+        }
+
+        return normalized.replace(/(^|[\s-'(])([a-z])/g, (match, prefix, letter) => {
+          return `${prefix}${letter.toUpperCase()}`;
+        });
       }
 
       function normalizeAgeValue(value) {
@@ -963,13 +969,13 @@
 
       function syncState() {
         state.language = uppercase(form.language.value || "EN");
-        state.name = uppercase(form.name.value);
+        state.name = state.language === "GU" ? form.name.value.trim() : properCase(form.name.value);
         state.age = normalizeAgeValue(form.age.value);
         state.ageUnit = uppercase(form.ageUnit.value || "YEARS");
         state.resident =
-          state.language === "GU" ? form.resident.value.trim() : uppercase(form.resident.value);
+          state.language === "GU" ? form.resident.value.trim() : properCase(form.resident.value);
         state.burialPlace =
-          state.language === "GU" ? form.burialPlace.value.trim() : uppercase(form.burialPlace.value);
+          state.language === "GU" ? form.burialPlace.value.trim() : properCase(form.burialPlace.value);
         state.gender = uppercase(form.gender.value);
         state.deceasedDate = normalizeDisplayDate(form.deceasedDate.value);
         state.maiyatDate = normalizeDisplayDate(form.maiyatDate.value);
@@ -1475,7 +1481,7 @@
 
       function getShareMessage() {
         const locale = getLocale();
-        const name = state.language === "GU" ? state.name.trim() : uppercase(state.name);
+        const name = state.language === "GU" ? state.name.trim() : properCase(state.name);
         if (name) {
           return state.language === "GU"
             ? `${name} માટેનું સ્મૃતિ કાર્ડ શેર કરી રહ્યો છું.`
